@@ -466,7 +466,7 @@ woba_abs_time %>%
 
 woba_abs_time %>% 
   group_by(count) %>%
-  summarize(r2 = cor(time_to_abs, woba)^2)
+  summarize(r2 = cor(time_to_abs, woba))
 
 
 
@@ -496,6 +496,6 @@ woba_badswing %>%
 
 woba_badswing %>% 
   group_by(count) %>%
-  summarize(r2 = cor(oz_swing_percent, woba)^2)
+  summarize(r = cor(oz_swing_percent, woba))
 
 
