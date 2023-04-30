@@ -4,6 +4,7 @@ pitch_data <- read.csv('pitches.csv')
 player_names <- read.csv('player_names.csv')
 atbat_data <- read.csv('atbats.csv')
 whiff_data <- read.csv('stats.csv')
+chase_data <- read.csv('chaseStats.csv')
 
 trimmed_pitch_data <- pitch_data %>% select(ab_id, b_count, s_count, outs, 
                                             pitch_num, pitch_type, event_num, 
@@ -38,6 +39,11 @@ woba_data <- whiff_data %>%
             seasons = n(),
             wobaxpa = sum(wobaxpa)) %>%
   mutate(woba = wobaxpa / total_pa)
+
+ 
+badswing_data <- chase_data %>% group_by(player_id, last_name, first_name) %>% 
+  summarize(oz_swing_percent = mean(oz_swing_percent), 
+            seasons = n())
 
 
 
@@ -385,7 +391,8 @@ league_values <- left_join(league_abs_time, league_count_woba, by="count") %>%
 all_vals <- rbind(league_values, trout_values)
 
 ggplot(data = all_vals, aes(x=count, y=woba, fill=hitter)) +
-  geom_bar(stat='identity', position = 'dodge')
+  geom_bar(stat='identity', position = 'dodge') + 
+  ggtitle("Expected wOBA From Each Count: Mike Trout vs. League Average")
 
 
 aggressive_hitters_df <- data.frame()
@@ -407,7 +414,7 @@ aggressive_league_df <- rbind(aggressive_hitters_df, league_values)
 aggressive_hitters_ahead_counts <- aggressive_league_df %>%
   filter(count=="2-0" | count == "3-0" | count == "3-1")
 
-ggplot(data = aggressive_hitters_ahead_counts, aes(x=count, y=woba, fill=hitter)) +
+ggplot(data = aggressive_hitters_ahead_counts, aes(x=count, y=time_to_abs, fill=hitter)) +
   geom_bar(stat='identity', position = 'dodge')
 
 
@@ -439,7 +446,7 @@ ggplot(data = woba_league_df, aes(x=count, y=woba, fill=hitter)) +
 #sample 50 hitters, compare 0-2 abs_time to 0-2 woba, see what happens
 # do same for other counts where hitters are behind.
 
-player_sample <- woba_data$player_id %>% sample(50, replace=FALSE)
+player_sample <- woba_data$player_id %>% sample(100, replace=FALSE)
 woba_abs_time <- data.frame()
 
 for(player_id in player_sample){
@@ -452,12 +459,43 @@ for(player_id in player_sample){
 
 woba_abs_time %>% 
   filter(count == "0-2") %>%
-  ggplot(aes(x=time_to_abs, y=woba)) + geom_point()
-  
+  ggplot(aes(x=time_to_abs, y=woba, label=hitter)) + 
+  geom_point() + 
+  geom_text(aes(label=ifelse((woba > 0.27), as.character(hitter), '')),hjust=1,vjust=-1) +
+  ggtitle("Expected # of Pitches To AB End vs Expected wOBA, 0-2 Count")
+
 woba_abs_time %>% 
   group_by(count) %>%
   summarize(r2 = cor(time_to_abs, woba)^2)
 
 
+
+head(badswing_data, 3)
+
+badswing_sample <- badswing_data$player_id %>% sample(100, replace=FALSE)
+woba_badswing <- data.frame()
+for(pid in badswing_sample){
+  player_name <- get_player_name(pid)
+  first <- player_name[1]
+  last <- player_name[2]
+  vals <- get_player_values(first,last)
+  player <- badswing_data %>% 
+    filter(player_id == pid)
+  oz_swing <- player$oz_swing_percent
+  vals <- cbind(vals, "oz_swing_percent" = rep(oz_swing, 12))
+  woba_badswing <- rbind(woba_badswing, vals)
+}
+
+woba_badswing %>% 
+  filter(count == "0-2") %>%
+  ggplot(aes(x=oz_swing_percent, y=woba, label=hitter)) + 
+  geom_point() + 
+  geom_text(aes(label=ifelse((woba > 0.27), as.character(hitter), '')),hjust=0,vjust=-1) + 
+  ggtitle("Outside Zone Swing Rate vs Expected wOBA, 0-2 count")
+
+
+woba_badswing %>% 
+  group_by(count) %>%
+  summarize(r2 = cor(oz_swing_percent, woba)^2)
 
 
