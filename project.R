@@ -23,15 +23,20 @@ league_pitch_data <- left_join(trimmed_ab_data, trimmed_pitch_data, by = "ab_id"
 league_pitch_data %>% group_by(event,code) %>% summarize(n()) %>% View()
 
 
+# select needed columns
 swingmiss_data <- whiff_data %>% 
   select(last_name, first_name, player_id, b_swinging_strike, b_total_swinging_strike)
-  
+
+
+#calculate whiff rate (swingmiss)
 swingmiss_data <- whiff_data %>% group_by(player_id, last_name, first_name) %>% 
   summarize(total_swing_miss = sum(b_swinging_strike), 
             total_swing = sum(b_total_swinging_strike), 
             seasons = n()) %>%
   mutate(swingmiss_rate = total_swing_miss / total_swing)
 
+
+# calculate woba over all seasons
 woba_data <- whiff_data %>% 
   mutate(wobaxpa = woba * b_total_pa) %>%
   group_by(player_id, last_name, first_name) %>% 
@@ -41,9 +46,12 @@ woba_data <- whiff_data %>%
   mutate(woba = wobaxpa / total_pa)
 
  
+# calculate chase rate
 badswing_data <- chase_data %>% group_by(player_id, last_name, first_name) %>% 
   summarize(oz_swing_percent = mean(oz_swing_percent), 
             seasons = n())
+
+#DONE until here
 
 
 
