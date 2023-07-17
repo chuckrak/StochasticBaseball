@@ -4,10 +4,10 @@ import matplotlib.pyplot as plt
 from collections import deque
 
 # Make dataframes
-pitch_data = pandas.read_csv("pitches.csv")
-atbat_data = pandas.read_csv("atbats.csv")
-player_data = pandas.read_csv("player_names.csv")
-savant_data = pandas.read_csv("savant_stats.csv")
+pitch_data = pd.read_csv("pitches.csv")
+atbat_data = pd.read_csv("atbats.csv")
+player_data = pd.read_csv("player_names.csv")
+savant_data = pd.read_csv("savant_stats.csv")
 
 # Trim pitch data
 
@@ -49,7 +49,7 @@ league_pitch_data <- left_join(trimmed_ab_data, trimmed_pitch_data, by = "ab_id"
              code == "Z"))
 """
 
-league_pitch_data = pandas.merge(atbat_data, pitch_data, on="ab_id", how="left")
+league_pitch_data = pd.merge(atbat_data, pitch_data, on="ab_id", how="left")
 league_pitch_data = league_pitch_data[
     ~(
         (league_pitch_data["code"] == "D")
@@ -192,9 +192,7 @@ states_dict = {
 
 
 def get_player_id(player_name):
-    player_name = player_name.split(" ")
-    first_name = player_name[0]
-    last_name = player_name[1]
+    first_name, last_name = player_name.split(" ")
     player_id = player_data[player_data["first_name"] == first_name][
         player_data["last_name"] == last_name
     ]["player_id"].tolist()
@@ -399,3 +397,37 @@ def calculate_count_woba(transition_matrix):
                 and visited[i] == 0
             ):
                 queue.append((i // 3, i % 3))
+
+
+def calculate_woba_and_abs_time(data, name):
+    transition_matrix = generate_markov_chain(data)
+    absorption_time = calculate_absorption_time(transition_matrix)
+    woba = calculate_count_woba(transition_matrix)
+    values = absorption_time.merge(woba, on="count")
+    values["hitter"] = name
+
+
+
+def get_player_values(fname, lname):
+    player_name = fname + " " + lname
+    player_id = get_player_id(player_name)
+    player_data = get_player_data(player_id)
+    return calculate_woba_and_abs_time(player_data, player_name)
+
+
+
+trout_values = get_player_values("Mike", "Trout")
+
+league_transition_mat = generate_markov_chain(league_pitch_data)
+league_values = calculate_woba_and_abs_time(league_transition_mat, "League Average")
+
+
+values = pd.concat([trout_values, league_values])
+
+#now want this:
+# ggplot(data = all_vals, aes(x=count, y=woba, fill=hitter)) +
+#  geom_bar(stat='identity', position = 'dodge') + 
+#  ggtitle("Expected wOBA From Each Count: Mike Trout vs. League Average")
+
+plt.bar(values["count"], values["woba"], values["hitter"])
+plt.show()
