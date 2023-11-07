@@ -1,0 +1,16 @@
+There is an array A of N non-negative integers. Any two initial elements of A that are adjacent can be replaced with their merged equivalent. 
+For example, given A = [2, 3, 15], pair (2, 3) can be replaced with 23, resulting in array (23, 15], 
+and pair (3, 15) can be replaced with 315, resulting in array [2, 315].
+The result of the merge cannot be merged any further, so we can't get 2315 in the example above. 
+What is the maximum possible sum of elements of A after any number of merges?
+Write a function:
+def solution (A)
+that, given an array A of N non-negative integers, returns the maximum sum of
+elements of A after any number of merges.
+Examples:
+1. Given A = [2, 2, 3, 5, 4, 0] the function should return 97. We can merge elements of the following pairs: (2, 2), (3, 5) and (4, 0). This results in A = [22, 35, 40], which
+sums up to 97.
+2. Given A = [3, 19, 191, 91, 3] the function should return 20107. We can merge elements of the following pairs: (19, 191) and (91, 3). This results in A = [3,
+19191, 913], which sums up to 20107.
+3. Given A = [12, 6, 18, 10, 1, 0], the function should return 1946. The merges should make A = [126, 1810, 10], which sums up to 1946.
+4. Given A = [2, 1, 0, 1, 2, 9, 1, O], the function should return 124. The merges should make A = [21, 0, 12, 91, 0], which sums up to 124
